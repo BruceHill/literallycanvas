@@ -1,8 +1,10 @@
 const { src, dest, series, parallel, watch } = require('gulp');
 const browserify = require('browserify');
+const babelify = require('babelify');
 const connect = require('gulp-connect');
 const rename = require('gulp-rename');
 const sass = require('gulp-sass')(require('sass'));
+const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
 const streamify = require('gulp-streamify');
 const uglify = require('gulp-uglify');
@@ -10,6 +12,7 @@ const coffee = require('gulp-coffee');
 const babel = require('gulp-babel');
 const preprocess = require('gulp-preprocess');
 const preprocessify = require('preprocessify');
+const sourcemaps = require('gulp-sourcemaps');
 const merge = require('merge-stream');
 
 function newcore() {
@@ -42,11 +45,11 @@ function sassTask() {
 
 function browserifyLcMain() {
   const bundleStream = browserify({
-      basedir: 'src', 
-      extensions: ['.js', '.jsx', '.coffee'], 
-      debug: true, 
-      standalone: 'LC'
-    })
+    basedir: 'src',
+    extensions: ['.js', '.jsx', '.coffee'],
+    debug: true,
+    standalone: 'LC'
+  })
     .add('./index.coffee')
     .external('create-react-class')
     .external('react')
@@ -57,7 +60,7 @@ function browserifyLcMain() {
       type: 'coffee',
       context: { INCLUDE_GUI: true }
     })
-    
+
     .transform('coffeeify')
     .transform('babelify')
     .bundle()
@@ -76,11 +79,11 @@ function browserifyLcMain() {
 
 function browserifyLcCore() {
   const bundleStream = browserify({
-      basedir: 'src', 
-      extensions: ['.js', '.jsx', '.coffee'], 
-      debug: true, 
-      standalone: 'LC'
-    })
+    basedir: 'src',
+    extensions: ['.js', '.jsx', '.coffee'],
+    debug: true,
+    standalone: 'LC'
+  })
     .add('./index.coffee')
     .transform(preprocessify, {
       includeExtensions: ['.coffee'],
@@ -128,8 +131,24 @@ const watchTask = (done) => {
   done();
 };
 
-const defaultTask = series(parallel(uglifyTask, sassTask));
-const dev = series(parallel(browserifyLcMain, browserifyLcCore, sassTask), parallel(watchTask, serve));
+function compileReactDemo() {
+  return browserify({
+    entries: './demo/react/src/App.js',
+    debug: true, // Source maps support
+  })
+    .transform(babelify) // Apply Babel transformations using .babelrc configuration
+    .bundle()
+    .on('error', function (err) { console.error(err); this.emit('end'); })
+    .pipe(source('react-demo.min.js')) // Convert Browserify stream to vinyl stream
+    .pipe(buffer()) // Convert vinyl stream to vinyl buffer for the next gulp plugins
+    .pipe(sourcemaps.init({ loadMaps: true })) // Load existing source maps for proper output
+    .pipe(uglify()) // Minify JavaScript
+    .pipe(sourcemaps.write('.')) // Write source maps
+    .pipe(dest('./demo/react/build')); // Output compiled files
+}
+
+const defaultTask = series(parallel(uglifyTask, sassTask, compileReactDemo));
+const dev = series(parallel(browserifyLcMain, browserifyLcCore, sassTask, compileReactDemo), parallel(watchTask, serve));
 
 exports.newcore = newcore;
 exports.commonjs = commonjs;
@@ -139,4 +158,5 @@ exports.browserifyLcCore = browserifyLcCore;
 exports.uglify = uglifyTask;
 exports.default = defaultTask;
 exports.watch = watchTask;
+exports.compileReactDemo = compileReactDemo;
 exports.dev = dev;

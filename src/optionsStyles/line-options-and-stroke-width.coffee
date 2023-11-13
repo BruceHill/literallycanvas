@@ -1,8 +1,7 @@
 React = require '../reactGUI/React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 {defineOptionsStyle} = require './optionsStyles'
-StrokeWidthPicker = React.createFactory require '../reactGUI/StrokeWidthPicker'
+StrokeWidthPicker = require '../reactGUI/StrokeWidthPicker'
 createSetStateOnEventMixin = require '../reactGUI/createSetStateOnEventMixin'
 {classSet} = require '../core/util'
 
@@ -17,11 +16,11 @@ defineOptionsStyle 'line-options-and-stroke-width', createReactClass
   mixins: [createSetStateOnEventMixin('toolChange')]
 
   render: ->
-    {div, ul, li, img} = DOM
+    e = React.createElement
     toggleIsDashed = =>
       @props.tool.isDashed = !@props.tool.isDashed
       @setState @getState()
-    togglehasEndArrow = =>
+    toggleHasEndArrow = =>
       @props.tool.hasEndArrow = !@props.tool.hasEndArrow
       @setState @getState()
 
@@ -33,14 +32,17 @@ defineOptionsStyle 'line-options-and-stroke-width', createReactClass
       'selected': @state.hasEndArrow
     style = {float: 'left', margin: 1}
 
-    (div {},
-      (div {className: dashButtonClass, onClick: toggleIsDashed, style},
-        (img {src: "#{@props.imageURLPrefix}/dashed-line.png"})
-      ),
-      (div {className: arrowButtonClass, onClick: togglehasEndArrow, style},
-        (img {src: "#{@props.imageURLPrefix}/line-with-arrow.png"})
-      ),
-      (StrokeWidthPicker {tool: @props.tool, lc: @props.lc})
-    )
+    e 'div', {},
+      [
+        e 'div', {className: dashButtonClass, onClick: toggleIsDashed, style},
+          [
+            e 'img', {src: "#{@props.imageURLPrefix}/dashed-line.png"}
+          ],
+        e 'div', {className: arrowButtonClass, onClick: toggleHasEndArrow, style},
+          [
+            e 'img', {src: "#{@props.imageURLPrefix}/line-with-arrow.png"}
+          ],
+        e(StrokeWidthPicker, {tool: @props.tool, lc: @props.lc})
+      ]
 
 module.exports = {}

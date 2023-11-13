@@ -1,8 +1,7 @@
 React = require '../reactGUI/React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 {defineOptionsStyle} = require './optionsStyles'
-StrokeWidthPicker = React.createFactory require '../reactGUI/StrokeWidthPicker'
+StrokeWidthPicker = require '../reactGUI/StrokeWidthPicker'
 createSetStateOnEventMixin = require '../reactGUI/createSetStateOnEventMixin'
 
 defineOptionsStyle 'polygon-and-stroke-width', createReactClass
@@ -21,10 +20,10 @@ defineOptionsStyle 'polygon-and-stroke-width', createReactClass
         func()
 
     showPolygonTools = () =>
-      @setState({ inProgress: true }) unless @state.inProgress;
+      @setState({ inProgress: true }) unless @state.inProgress
 
     hidePolygonTools = () =>
-      @setState({ inProgress: false });
+      @setState({ inProgress: false })
 
     unsubscribeFuncs.push @props.lc.on 'lc-polygon-started', showPolygonTools
     unsubscribeFuncs.push @props.lc.on 'lc-polygon-stopped', hidePolygonTools
@@ -33,8 +32,8 @@ defineOptionsStyle 'polygon-and-stroke-width', createReactClass
     @unsubscribe()
 
   render: ->
+    e = React.createElement  # Shortcut for createElement
     lc = @props.lc
-    {div, img} = DOM
 
     polygonFinishOpen = () =>
       lc.trigger 'lc-polygon-finishopen'
@@ -48,16 +47,28 @@ defineOptionsStyle 'polygon-and-stroke-width', createReactClass
     polygonToolStyle = {}
     polygonToolStyle = {display: 'none'} unless @state.inProgress
 
-    div {},
-      div {className: 'polygon-toolbar horz-toolbar', style: polygonToolStyle},
-        (div {className: 'square-toolbar-button', onClick: polygonFinishOpen},
-          img {src: "#{@props.imageURLPrefix}/polygon-open.png"}),
-        (div {className: 'square-toolbar-button', onClick: polygonFinishClosed},
-          img {src: "#{@props.imageURLPrefix}/polygon-closed.png"}),
-        (div {className: 'square-toolbar-button', onClick: polygonCancel},
-          img {src: "#{@props.imageURLPrefix}/polygon-cancel.png"}),
-      div {},
-        (StrokeWidthPicker {tool: @props.tool, lc: @props.lc})
+    e 'div', {},
+      [
+        e 'div', {className: 'polygon-toolbar horz-toolbar', style: polygonToolStyle},
+        [
+          e 'div', {className: 'square-toolbar-button', onClick: polygonFinishOpen},
+          [
+            e 'img', {src: "#{@props.imageURLPrefix}/polygon-open.png"}
+          ],
+          e 'div', {className: 'square-toolbar-button', onClick: polygonFinishClosed},
+          [
+            e 'img', {src: "#{@props.imageURLPrefix}/polygon-closed.png"}
+          ],
+          e 'div', {className: 'square-toolbar-button', onClick: polygonCancel},
+          [
+            e 'img', {src: "#{@props.imageURLPrefix}/polygon-cancel.png"}
+          ]
+        ],
+        e 'div', {},
+        [
+          React.createElement(StrokeWidthPicker, {tool: @props.tool, lc: @props.lc})
+        ]
+      ]
 
 
 module.exports = {}

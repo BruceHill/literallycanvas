@@ -1,4 +1,4 @@
-DOM = require '../reactGUI/ReactDOMFactories-shim'
+React = require '../reactGUI/React-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 createSetStateOnEventMixin = require './createSetStateOnEventMixin'
 {_} = require '../core/localization'
@@ -11,7 +11,7 @@ ClearButton = createReactClass
   mixins: [createSetStateOnEventMixin('drawingChange')]
 
   render: ->
-    {div} = DOM
+    e = React.createElement 
     {lc} = @props
 
     className = classSet
@@ -21,7 +21,7 @@ ClearButton = createReactClass
       'disabled': not @state.isEnabled
     onClick = if lc.canUndo() then (=> lc.clear()) else ->
 
-    (div {className, onClick}, _('Clear'))
+    e('div', {className, onClick}, _('Clear'))
 
 
 module.exports = ClearButton

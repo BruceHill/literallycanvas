@@ -1,8 +1,7 @@
-DOM = require '../reactGUI/ReactDOMFactories-shim'
+React = require '../reactGUI/React-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 {defineOptionsStyle} = require './optionsStyles'
 {_} = require '../core/localization'
-
 
 SANS_SERIF_FONTS = [
   ['Arial', 'Arial,"Helvetica Neue",Helvetica,sans-serif'],
@@ -107,45 +106,43 @@ defineOptionsStyle 'font', createReactClass
   componentDidMount: -> @updateTool()
 
   render: ->
+    e = React.createElement
     lc = @props.lc
 
-    {div, input, select, option, br, label, span, optgroup} = DOM
-
-    (div {className: 'lc-font-settings'},
-      (select {value: @state.fontSizeIndex, onChange: @handleFontSize},
-        @getFontSizes().map((size, ix) =>
-          (option {value: ix, key: ix}, "#{size}px")
-        )
-      )
-      (select {value: @state.fontName, onChange: @handleFontFamily},
-        ALL_FONTS.map ([label, fonts]) =>
-          (optgroup {key: label, label}, fonts.map (family, ix) ->
-            (option {value: family.name, key: ix}, family.name)
-          )
-      )
-      (span {},
-        (label {htmlFor: 'italic'}, _("italic")),
-        (input \
-          {
-            type: 'checkbox',
-            id: 'italic',
-            checked: @state.isItalic,
-            onChange: @handleItalic
-          }
-        )
-      )
-      (span {},
-        (label {htmlFor: 'bold'}, _("bold")),
-        (input \
-          {
-            type: 'checkbox',
-            id: 'bold',
-            checked: @state.isBold,
-            onChange: @handleBold,
-          }
-        )
-      )
-    )
+    e 'div', {className: 'lc-font-settings'},
+      [
+        e 'select', {value: @state.fontSizeIndex, onChange: @handleFontSize},
+          @getFontSizes().map((size, ix) =>
+            e 'option', {value: ix, key: ix}, "#{size}px"
+          ),
+        e 'select', {value: @state.fontName, onChange: @handleFontFamily},
+          ALL_FONTS.map ([label, fonts]) =>
+            e 'optgroup', {key: label, label}, fonts.map (family, ix) ->
+              e 'option', {value: family.name, key: ix}, family.name
+        ,
+        e 'span', {},
+          [
+            e 'label', {htmlFor: 'italic'}, _("italic"),
+            e 'input',
+              {
+                type: 'checkbox',
+                id: 'italic',
+                checked: @state.isItalic,
+                onChange: @handleItalic
+              }
+          ],
+        e 'span', {},
+          [
+            e 'label', {htmlFor: 'bold'}, _("bold"),
+            e 'input',
+              {
+                type: 'checkbox',
+                id: 'bold',
+                checked: @state.isBold,
+                onChange: @handleBold,
+              }
+          ]
+      ]
 
 
 module.exports = {}

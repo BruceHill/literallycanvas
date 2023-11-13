@@ -1,5 +1,4 @@
 React = require './React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 createSetStateOnEventMixin = require './createSetStateOnEventMixin'
 {classSet} = require '../core/util'
@@ -7,14 +6,6 @@ createSetStateOnEventMixin = require './createSetStateOnEventMixin'
 
 createUndoRedoButtonComponent = (undoOrRedo) -> createReactClass
   displayName: if undoOrRedo == 'undo' then 'UndoButton' else 'RedoButton'
-
-  # We do this a lot, even though it reads as a React no-no.
-  # The reason is that '@props.lc' is a monolithic state bucket for
-  # Literally Canvas, and does not offer opportunities for encapsulation.
-  #
-  # However, this component really does read and write only to the 'undo'
-  # part of the state bucket, and we have to get react to update somehow, and
-  # we don't want the parent to have to worry about this, so it's in @state.
   getState: -> {
     isEnabled: switch
       when undoOrRedo == 'undo' then @props.lc.canUndo()
@@ -22,9 +13,7 @@ createUndoRedoButtonComponent = (undoOrRedo) -> createReactClass
   }
   getInitialState: -> @getState()
   mixins: [createSetStateOnEventMixin('drawingChange')]
-
   render: ->
-    {div, img} = DOM
     {lc, imageURLPrefix} = @props
     title = if undoOrRedo == 'undo' then 'Undo' else 'Redo'
     title = _(title)
@@ -38,16 +27,15 @@ createUndoRedoButtonComponent = (undoOrRedo) -> createReactClass
       when undoOrRedo == 'redo' then -> lc.redo()
     src = "#{imageURLPrefix}/#{undoOrRedo}.png"
     style = {backgroundImage: "url(#{src})"}
+    React.createElement 'div', {className, onClick, title, style}
 
-    (div {className, onClick, title, style})
+# Use React.createElement instead of React.createFactory
+UndoButton = (props) -> React.createElement(createUndoRedoButtonComponent('undo'), props)
+RedoButton = (props) -> React.createElement(createUndoRedoButtonComponent('redo'), props)
 
-
-UndoButton = React.createFactory createUndoRedoButtonComponent('undo')
-RedoButton = React.createFactory createUndoRedoButtonComponent('redo')
 UndoRedoButtons = createReactClass
   displayName: 'UndoRedoButtons'
   render: ->
-    {div} = DOM
-    (div {className: 'lc-undo-redo'}, UndoButton(@props), RedoButton(@props))
+    React.createElement 'div', {className: 'lc-undo-redo'}, UndoButton(@props), RedoButton(@props)
 
 module.exports = UndoRedoButtons

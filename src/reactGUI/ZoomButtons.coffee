@@ -1,5 +1,4 @@
 React = require './React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 createSetStateOnEventMixin = require './createSetStateOnEventMixin'
 {classSet} = require '../core/util'
@@ -7,17 +6,14 @@ createSetStateOnEventMixin = require './createSetStateOnEventMixin'
 
 createZoomButtonComponent = (inOrOut) -> createReactClass
   displayName: if inOrOut == 'in' then 'ZoomInButton' else 'ZoomOutButton'
-
   getState: -> {
     isEnabled: switch
       when inOrOut == 'in' then @props.lc.scale < @props.lc.config.zoomMax
-      when inOrOut == 'out' then  @props.lc.scale > @props.lc.config.zoomMin
+      when inOrOut == 'out' then @props.lc.scale > @props.lc.config.zoomMin
   }
   getInitialState: -> @getState()
   mixins: [createSetStateOnEventMixin('zoom')]
-
   render: ->
-    {div, img} = DOM
     {lc, imageURLPrefix} = @props
     title = if inOrOut == 'in' then 'Zoom in' else 'Zoom out'
     title = _(title)
@@ -32,16 +28,19 @@ createZoomButtonComponent = (inOrOut) -> createReactClass
     src = "#{imageURLPrefix}/zoom-#{inOrOut}.png"
     style = {backgroundImage: "url(#{src})"}
 
-    (div {className, onClick, title, style})
+    # Use React.createElement instead of DOM.div
+    React.createElement 'div', {className, onClick, title, style}
 
+# Create ZoomButton elements directly with React.createElement
+ZoomOutButton = (props) -> React.createElement(createZoomButtonComponent('out'), props)
+ZoomInButton = (props) -> React.createElement(createZoomButtonComponent('in'), props)
 
-ZoomOutButton = React.createFactory createZoomButtonComponent('out')
-ZoomInButton = React.createFactory createZoomButtonComponent('in')
 ZoomButtons = createReactClass
   displayName: 'ZoomButtons'
   render: ->
-    {div} = DOM
-    (div {className: 'lc-zoom'}, ZoomOutButton(@props), ZoomInButton(@props))
-
+    # Use React.createElement instead of DOM.div
+    React.createElement 'div', {className: 'lc-zoom'},
+      ZoomOutButton(@props),
+      ZoomInButton(@props)
 
 module.exports = ZoomButtons

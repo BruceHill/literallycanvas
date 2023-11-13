@@ -1,11 +1,11 @@
-DOM = require '../reactGUI/ReactDOMFactories-shim'
+React = require '../reactGUI/React-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 {defineOptionsStyle} = require './optionsStyles'
 
-
 defineOptionsStyle 'null', createReactClass
   displayName: 'NoOptions'
-  render: -> DOM.div()
-
+  render: ->
+    e = React.createElement
+    e 'div', {}
 
 module.exports = {}

@@ -1,64 +1,64 @@
 React = require './React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 
-ClearButton = React.createFactory require './ClearButton'
-UndoRedoButtons = React.createFactory require './UndoRedoButtons'
-ZoomButtons = React.createFactory require './ZoomButtons'
+# Import components and use them directly
+ClearButton = require './ClearButton'
+UndoRedoButtons = require './UndoRedoButtons'
+ZoomButtons = require './ZoomButtons'
 
 {_} = require '../core/localization'
-ColorWell = React.createFactory require './ColorWell'
+ColorWell = require './ColorWell'
 
-ColorPickers = React.createFactory createReactClass
+# Refactor ColorPickers to use React.createElement
+ColorPickers = createReactClass
   displayName: 'ColorPickers'
   render: ->
     {lc} = @props
-    {div} = DOM
-    (div {className: 'lc-color-pickers'},
-      (ColorWell {lc, colorName: 'primary', label: _('stroke')})
-      (ColorWell {lc, colorName: 'secondary', label: _('fill')}),
-      (ColorWell {lc, colorName: 'background', label: _('bg')})
+    React.createElement('div', {className: 'lc-color-pickers'},
+      React.createElement(ColorWell, {lc, id:"primary", colorName: 'primary', label: _('stroke')}),
+      React.createElement(ColorWell, {lc, id:"secondary", colorName: 'secondary', label: _('fill')}),
+      React.createElement(ColorWell, {lc, id:"background", colorName: 'background', label: _('bg')})
     )
 
-
+# Refactor Picker to use React.createElement
 Picker = createReactClass
   displayName: 'Picker'
   getInitialState: -> {selectedToolIndex: 0}
   renderBody: ->
-    {div} = DOM
     {toolButtonComponents, lc, imageURLPrefix} = @props
-    (div {className: 'lc-picker-contents'},
-      toolButtonComponents.map((component, ix) =>
-        (component \
-          {
-            lc, imageURLPrefix,
-            key: ix
-            isSelected: ix == @state.selectedToolIndex,
-            onSelect: (tool) =>
-              lc.setTool(tool)
-              @setState({selectedToolIndex: ix})
-          }
-        )
-      ),
-      if toolButtonComponents.length % 2 != 0
-        (div {className: 'toolbar-button thin-button disabled'})
-      (div style: {
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-        },
-        ColorPickers({lc: @props.lc})
-        UndoRedoButtons({lc, imageURLPrefix})
-        ZoomButtons({lc, imageURLPrefix})
-        ClearButton({lc})
+    buttons = toolButtonComponents.map((Component, ix) =>
+      React.createElement(Component,
+        {
+          lc, imageURLPrefix,
+          key: ix,
+          isSelected: ix == @state.selectedToolIndex,
+          onSelect: (tool) =>
+            lc.setTool(tool)
+            @setState({selectedToolIndex: ix})
+        }
+      )
+    )
+    # Add a spacer if the number of tools is odd
+    if toolButtonComponents.length % 2 != 0
+      buttons.push React.createElement('div', {key: "spacer", className: 'toolbar-button thin-button disabled'})
+
+    React.createElement('div', {className: 'lc-picker-contents'},
+      buttons,
+      React.createElement('div', {style: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+      }},
+        React.createElement(ColorPickers, {lc}),
+        React.createElement(UndoRedoButtons, {lc, imageURLPrefix}),
+        React.createElement(ZoomButtons, {lc, imageURLPrefix}),
+        React.createElement(ClearButton, {lc})
       )
     )
   render: ->
-    {div} = DOM
-    (div {className: 'lc-picker'},
+    React.createElement('div', {className: 'lc-picker'},
       this.renderBody()
     )
-
 
 module.exports = Picker

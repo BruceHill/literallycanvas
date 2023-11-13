@@ -1,10 +1,8 @@
 React = require './React-shim'
-DOM = require '../reactGUI/ReactDOMFactories-shim'
 createReactClass = require '../reactGUI/createReactClass-shim'
 PureRenderMixin = require 'react-addons-pure-render-mixin'
 {classSet, requestAnimationFrame, cancelAnimationFrame} = require '../core/util'
 {_} = require '../core/localization'
-
 
 parseHSLAString = (s) ->
   return {hue: 0, sat: 0, light: 0, alpha: 0} if s == 'transparent'
@@ -27,44 +25,41 @@ getHSLString = ({hue, sat, light}) ->
   "hsl(#{hue}, #{sat}%, #{light}%)"
 
 
-ColorGrid = React.createFactory createReactClass
+ColorGrid = createReactClass
   displayName: 'ColorGrid'
   mixins: [PureRenderMixin]
   render: ->
-    {div} = DOM
-    (div {},
+    e = React.createElement
+
+    e 'div', {},
       @props.rows.map((row, ix) =>
-        return (div \
-          {
-            className: 'color-row',
-            key: ix,
-            style: {width: 20 * row.length}
-          },
+        console.log(row, ix)
+        e 'div', {
+          className: 'color-row',
+          key: ix,
+          style: {width: 20 * row.length}
+        },
           row.map((cellColor, ix2) =>
             {hue, sat, light, alpha} = cellColor
             colorString = getHSLAString(cellColor)
             colorStringNoAlpha = "hsl(#{hue}, #{sat}%, #{light}%)"
             className = classSet
-              'color-cell': true
+              'color-cell': true,
               'selected': @props.selectedColor == colorString
             update = (e) =>
               @props.onChange(cellColor, colorString)
               e.stopPropagation()
               e.preventDefault()
-            (div \
-              {
-                className,
-                onTouchStart: update
-                onTouchMove: update
-                onClick: update
-                style: {backgroundColor: colorStringNoAlpha}
-                key: ix2
-              }
-            )
+            e 'div', {
+              className,
+              onTouchStart: update,
+              onTouchMove: update,
+              onClick: update,
+              style: {backgroundColor: colorStringNoAlpha},
+              key: ix2
+            }
           )
-        )
       )
-    )
 
 
 ColorWell = createReactClass
@@ -132,69 +127,78 @@ ColorWell = createReactClass
       @setColor(getHSLAString(hsla))
 
   render: ->
-    {div, label, br} = DOM
-    (div \
-      {
+    e = React.createElement
+
+    e('div', {
+      className: classSet({
+        'color-well': true,
+        'open': @state.isPickerVisible
+      }),
+      onMouseLeave: @closePicker,
+      style: {float: 'left', textAlign: 'center'},
+      key:@props.id
+    }
+      e('label', {}, @props.label),
+      e('br', {}),
+      e('div', {
         className: classSet({
-          'color-well': true,
-          'open': @state.isPickerVisible ,
+          'color-well-color-container': true,
+          'selected': @state.isPickerVisible
         }),
-        onMouseLeave: @closePicker
-        style: {float: 'left', textAlign: 'center'}
-      },
-      (label {float: 'left'}, @props.label),
-      (br {}),
-      (div \
-        {
-          className: classSet
-            'color-well-color-container': true
-            'selected': @state.isPickerVisible
-          style: {backgroundColor: 'white'}
-          onClick: @togglePicker
-        },
-        (div {className: 'color-well-checker color-well-checker-top-left'}),
-        (div {
+        style: {backgroundColor: 'white'},
+        onClick: @togglePicker
+      }, 
+        e('div', {className: 'color-well-checker color-well-checker-top-left'}),
+        e('div', {
           className: 'color-well-checker color-well-checker-bottom-right',
           style: {left: '50%', top: '50%'}
         }),
-        (div \
-          {
-            className: 'color-well-color',
-            style: {backgroundColor: @state.colorString}
-          },
-          " "
-        ),
+        e('div', {
+          className: 'color-well-color',
+          style: {backgroundColor: @state.colorString}
+        }, " ")
       ),
       @renderPicker()
     )
 
+
   renderPicker: ->
-    {div, label, input} = DOM
+    e = React.createElement 
+
     return null unless @state.isPickerVisible
 
-    renderLabel = (text) =>
-      (div {
-        className: 'color-row label', key: text, style: {
-          lineHeight: '20px'
+    renderLabel = (text) ->
+      e 'div', {
+        className: 'color-row label',
+        key: text,
+        style: {
+          lineHeight: '20px',
           height: 16
         }
-      }, text)
+      }, text
 
     renderColor = =>
       checkerboardURL = "#{@props.lc.opts.imageURLPrefix}/checkerboard-8x8.png"
-      (div {
-        className: 'color-row', key: "color", style: {
-          position: 'relative'
-          backgroundImage: "url(#{checkerboardURL})"
-          backgroundRepeat: 'repeat'
+      e 'div', {
+        className: 'color-row',
+        key: "color",
+        style: {
+          position: 'relative',
+          backgroundImage: "url(#{checkerboardURL})",
+          backgroundRepeat: 'repeat',
           height: 24
-        }},
-        (div {style: {
-          position: 'absolute',
-          top: 0, right: 0, bottom: 0, left: 0
-          backgroundColor: @state.colorString
-        }})
-      )
+        }
+      },
+        e 'div', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: @state.colorString
+          }
+        }
 
     rows = []
     rows.push ({hue: 0, sat: 0, light: i, alpha: @state.alpha} for i in [0..100] by 10)
@@ -203,24 +207,30 @@ ColorWell = createReactClass
 
     onSelectColor = (hsla, s) => @setColor(s)
 
-    (div {className: 'color-picker-popup'},
-      renderColor()
-      renderLabel(_("alpha"))
-      (input {
+    e('div', {className: 'color-picker-popup'}, [
+      renderColor(),
+      renderLabel(_("alpha")),
+      e('input', {
         type: 'range',
-        min: 0, max: 1, step: 0.01
+        min: 0,
+        max: 1,
+        step: 0.01,
         value: @state.alpha,
-        onChange: (e) => @setAlpha(parseFloat(e.target.value))
+        onChange: (e) => @setAlpha(parseFloat(e.target.value)),
+        key: 'alpha-range'
       }),
-      renderLabel(_("saturation"))
-      (input {
+      renderLabel(_("saturation")),
+      e('input', {
         type: 'range',
-        min: 0, max: 100,
-        value: @state.sat, max: 100,
-        onChange: (e) => @setSat(parseInt(e.target.value, 10))
+        min: 0,
+        max: 100,
+        value: @state.sat,
+        onChange: (e) => @setSat(parseInt(e.target.value, 10)),
+        key: 'saturation-range'
       }),
-      (ColorGrid {rows, selectedColor: @state.colorString, onChange: onSelectColor})
-    )
+      e(ColorGrid, {rows, selectedColor: @state.colorString, onChange: onSelectColor, key: 'color-grid'})
+    ])
+ 
 
 
 module.exports = ColorWell
