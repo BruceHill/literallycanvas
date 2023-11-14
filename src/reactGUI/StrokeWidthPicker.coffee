@@ -10,7 +10,9 @@ module.exports = createReactClass
   getInitialState: -> @getState()
   mixins: [createSetStateOnEventMixin('toolDidUpdateOptions')]
 
-  componentWillReceiveProps: (props) -> @setState @getState(props.tool)
+  componentDidUpdate: (prevProps) ->
+    if prevProps.tool != @props.tool
+      @setState @getState(@props.tool)
 
   render: ->
     strokeWidths = @props.lc.opts.strokeWidths
